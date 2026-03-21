@@ -4,14 +4,42 @@ import '../../app/router.dart';
 import '../../providers/alert_provider.dart';
 import '../../models/alert_model.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _pulseScale = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     // State is watched here, but currently just uses placeholder static content.
     // You can wire this up to make your UI dynamic later.
-    final alertProvider = context.watch<AlertProvider>();
+    context.watch<AlertProvider>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -28,8 +56,7 @@ class HomeScreen extends StatelessWidget {
               _buildHelpText(),
               const SizedBox(height: 16), // A large gap to create visual space
               _buildSosCircles(context),
-              const SizedBox(height: 16), // Space before the inner nav bar
-              _buildInnerBottomNav(),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -97,6 +124,7 @@ class HomeScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Container(
         width: double.infinity,
+        clipBehavior: Clip.antiAlias,
         padding: const EdgeInsets.all(24.0),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -106,38 +134,51 @@ class HomeScreen extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(20),
         ),
-        // I have removed the placeholder network image from here.
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Last Update: Checked 2 mins ago',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-                fontFamily: 'Poppins',
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Last Update: Checked 2 mins ago',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'You\nare safe',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      height: 1.1,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'No emergencies reported nearby',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 12),
-            Text(
-              'You\nare safe',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-                height: 1.1,
-              ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'No emergencies reported nearby',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-              ),
+            const SizedBox(width: 18),
+            SizedBox(
+              width: 140,
+              height: 140,
+              child: Image.asset('assets/images/img1.png', fit: BoxFit.cover),
             ),
           ],
         ),
@@ -174,114 +215,78 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSosCircles(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, AppRoutes.sos);
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        final alpha = (40 + (_pulseController.value * 45)).round();
+
+        return Transform.scale(
+          scale: _pulseScale.value,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFE02323).withAlpha(alpha),
+                  blurRadius: 24,
+                  spreadRadius: 3,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
       },
-      child: Container(
-        width: 280,
-        height: 280,
-        decoration: const BoxDecoration(
-          color: Color(0xFFFAE8E9),
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(context, AppRoutes.sos);
+        },
         child: Container(
-          width: 240,
-          height: 240,
+          width: 280,
+          height: 280,
           decoration: const BoxDecoration(
-            color: Color(0xFFF9D2D2),
+            color: Color(0xFFFAE8E9),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Container(
-            width: 190,
-            height: 190,
+            width: 240,
+            height: 240,
             decoration: const BoxDecoration(
-              color: Color(0xFFF2A6A6),
+              color: Color(0xFFF9D2D2),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
             child: Container(
-              width: 140,
-              height: 140,
+              width: 190,
+              height: 190,
               decoration: const BoxDecoration(
-                color: Color(0xFFE02323),
+                color: Color(0xFFF2A6A6),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: const Text(
-                'SOS',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE02323),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'SOS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // I have moved the bottom navigation from Scaffold to here, inside the body.
-  Widget _buildInnerBottomNav() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      // SafeArea top: false ensures we only add bottom padding for the home bar.
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildNavItem(Icons.home_filled, 'Home', true),
-            _buildNavItem(Icons.crisis_alert, 'SOS', false),
-            _buildNavItem(Icons.map_outlined, 'Map', false),
-            _buildNavItem(Icons.person_outline, 'Profile', false),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    final color = isActive ? const Color(0xFFE02323) : const Color(0xFFA4A4A4);
-    return InkWell(
-      onTap: () {
-        // TODO: Navigation logic
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontFamily: 'Poppins',
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-        ],
       ),
     );
   }
